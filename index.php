@@ -1,12 +1,40 @@
-<?php include "config.php";
+<?php
+include "config.php";
 
+$groupid = null;
 
-$sql = "SELECT * FROM `GROUPE` ";
-$stmt = $conn->prepare($sql);
-$stmt->execute();
-$resultgr = $stmt->get_result();
+// Check if the search form is submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Retrieve the searched group name
+    $searchGroupName = isset($_POST['searchLetter']) ? $_POST['searchLetter'] : '';
 
+    // Call the function to filter groups based on the search group name
+    $resultgr = filterTeamsByName($conn, $searchGroupName);
+} else {
+    // If the form is not submitted, fetch all groups
+    $sql = "SELECT * FROM `GROUPE` ";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $resultgr = $stmt->get_result();
+}
+
+// Function to filter teams based on the search group name
+function filterTeamsByName($conn, $searchGroupName)
+{
+    $sql = "SELECT * FROM `GROUPE` WHERE name LIKE ?";
+    $stmt = $conn->prepare($sql);
+
+    // Add the wildcard '%' to search for group names containing the input
+    $searchParam = '%' . $searchGroupName . '%';
+    $stmt->bind_param('s', $searchParam);
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    return $result;
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -33,10 +61,17 @@ $resultgr = $stmt->get_result();
                 <a href="#" class="text-light text-decoration-none">Groupe</a>
             </div>
         </nav>
-
+        <!-- comment  try-->
         <div class="backfirstsection">
             <p class="firstparagraphe">Bienvenue sur notre site dédié à la Coupe du Monde de la FIFA ! Nous sommes ravis de vous accueillir au cœur de l'action, où le monde entier se réunit pour célébrer l'excellence du football. Plongez dans l'univers palpitant de la plus prestigieuse compétition de football, où les nations s'affrontent pour décrocher la gloire suprême.</p>
         </div>
+    </section>
+    <section class="searchSection pt-5 container d-flex justify-content-center ">
+        <form method="POST" action="" class="d-flex ">
+            <input type="text" class="form-control " id="searchLetter" name="searchLetter" style="width: 300px !important;" />
+            <button type="submit" class="btn btn-danger btn-lg" role="button">Search</button>
+
+        </form>
     </section>
     <section class=" pt-5">
         <div class="row d-flex gap-5 justify-content-center">
@@ -44,6 +79,7 @@ $resultgr = $stmt->get_result();
                 while ($row = mysqli_fetch_assoc($resultgr)) {
                     $groupid = $row["groupid"];
                     $stade = $row["stade"];
+                    $name = $row["name"];
 
 
             ?>
@@ -73,12 +109,89 @@ $resultgr = $stmt->get_result();
                                 <?php } ?>
                         </div>
                     </div>
-
-
         <?php }
                         }
                     } ?>
         </div>
+        <section class="pt-8">
+            <section class="searchSection pt-5 container d-flex justify-content-center ">
+
+            </section>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Flag</th>
+                        <th scope="col">Equipe</th>
+                        <th scope="col">Joueur_cle</th>
+                        <th scope="col">Groupe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $sql_gr = "SELECT * FROM `GROUPE` ";
+                    $stmt_gr = $conn->prepare($sql_gr);
+                    $stmt_gr->execute();
+                    $resultgr = $stmt_gr->get_result();
+
+
+
+
+
+
+
+                    while ($row = mysqli_fetch_assoc($resultgr)) {
+                        $groupid = $row["groupid"];
+                        $stade = $row["stade"];
+
+                        $sql_eq = "SELECT * FROM `EQUIPE` WHERE id_gr = $groupid ";
+                        $stmt_eq = $conn->prepare($sql_eq);
+                        $stmt_eq->execute();
+                        $resulteq = $stmt_eq->get_result();
+
+                        while ($row2 = mysqli_fetch_assoc($resulteq)) {
+                            $equipeid = $row2["equipeid"];
+                            $nom = $row2["nom"];
+                            $joueurcl = $row2["joueurcl"];
+                            $img = $row2["img"];
+                            $id_gr = $row2["id_gr"];
+                    ?>
+                            <tr>
+                                <th scope="row"><?php echo $equipeid; ?></th>
+                                <td><img class="card-img w-25" src="<?php echo $img; ?>" alt=""></td>
+                                <td><?php echo $nom; ?></td>
+                                <td><?php echo $joueurcl; ?></td>
+                                <td><?php echo $id_gr; ?></td>
+                            </tr>
+                    <?php
+                        }
+                    }
+                    ?>
+                </tbody>
+            </table>
+            <?php
+
+            // $resulteq = filterTeams($conn, $groupid, $searchLetter);
+
+            while ($row = mysqli_fetch_assoc($resulteq)) {
+                $equipeid = $row["equipeid"];
+                $nom = $row["nom"];
+                $joueurcl = $row["joueurcl"];
+                $img = $row["img"];
+                $id_gr = $row["id_gr"];
+            ?>
+                <tr>
+                    <th scope="row"><?php echo $equipeid; ?></th>
+                    <td><img class="card-img w-25" src="<?php echo $img; ?>" alt=""></td>
+                    <td><?php echo $nom; ?></td>
+                    <td><?php echo $joueurcl; ?></td>
+                    <td><?php echo $id_gr; ?></td>
+                </tr>
+            <?php
+            }
+            ?>
+        </section>
 
 </body>
 

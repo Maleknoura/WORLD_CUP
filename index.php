@@ -73,7 +73,7 @@ $resultgr = $stmt->get_result();
                                 <?php } ?>
                         </div>
                     </div>
-                    
+
 
         <?php }
                         }
